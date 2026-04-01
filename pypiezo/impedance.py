@@ -1,4 +1,5 @@
 from typing import Any
+import warnings
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -25,6 +26,8 @@ class Impedance:
         self.resonant_quality_factor = None  # Qm
         self.motional_capacitance = None  # C1
         self.motional_inductance = None  # L1
+
+        self._off_res_cap = None  # Optional: Off-resonance capacitance for constrained fitting
 
         self.resolve_resonance()
 
@@ -139,35 +142,75 @@ class Impedance:
         print(f'C1 (Motional Capacitance): {self.motional_capacitance:.2e} F')
         print(f'L1 (Motional Inductance): {self.motional_inductance:.2e} H')
 
-    def curve_fit(self):
+    def curve_fit(self, off_res_cap: float | bool | None = None):
         if self.resonant_frequency is None or self.anti_resonant_frequency is None:
             self.resolve_resonance()
+
+        if isinstance(off_res_cap, float):
+            self._off_res_cap = off_res_cap
+            fit_func = self._curve_fit_method_constrain_off_resonance
+            p0 = [self.static_capacitance, self.motional_resistance, self.motional_inductance]
+        elif off_res_cap:
+            self._find_off_resonance_capacitance()
+            fit_func = self._curve_fit_method_constrain_off_resonance
+            p0 = [self.static_capacitance, self.motional_resistance, self.motional_inductance]
+        else:
+            fit_func = self._curve_fit_method
+            p0 = [self.static_capacitance, self.motional_capacitance, self.motional_resistance, self.motional_inductance]
 
         ydata = np.concatenate((self.real_impedance, np.imag(self.impedance_complex)))
-        popt, *_ = curve_fit(self._curve_fit_method, self.angular_frequency, ydata,
-                             p0=[self.static_capacitance, self.motional_capacitance, self.motional_resistance,
-                                 self.motional_inductance])
-        self.static_capacitance, self.motional_capacitance, self.motional_resistance, self.motional_inductance = popt
+        popt, *_ = curve_fit(fit_func, self.angular_frequency, ydata, p0=p0)
+
+        if not off_res_cap:
+            self.static_capacitance, self.motional_capacitance, self.motional_resistance, self.motional_inductance = \
+                popt
+        else:
+            self.static_capacitance, self.motional_resistance, self.motional_inductance = popt
+            self.motional_capacitance = self._off_res_cap - self.static_capacitance
 
     def least_squares_fit(self, resonance_weight: float = 5.0, resonance_width: float | None = None,
-                          frequency_weights: np.ndarray | None = None):
+                          frequency_weights: np.ndarray | None = None, off_res_cap: float | bool | None = None):
         if self.resonant_frequency is None or self.anti_resonant_frequency is None:
             self.resolve_resonance()
 
-        p0 = np.array([
-            self.static_capacitance,
-            self.motional_capacitance,
-            self.motional_resistance,
-            self.motional_inductance,
-        ], dtype=float)
+        if isinstance(off_res_cap, float):
+            self._off_res_cap = off_res_cap
+            fit_func = self._least_squares_residuals_constrain_off_resonance
+            p0 = np.array([
+                self.static_capacitance,
+                self.motional_resistance,
+                self.motional_inductance,
+            ], dtype=np.float64)
+        elif off_res_cap:
+            self._find_off_resonance_capacitance()
+            fit_func = self._least_squares_residuals_constrain_off_resonance
+            p0 = np.array([
+                self.static_capacitance,
+                self.motional_resistance,
+                self.motional_inductance,
+            ], dtype=np.float64)
+        else:
+            fit_func = self._least_squares_residuals
+            p0 = np.array([
+                self.static_capacitance,
+                self.motional_capacitance,
+                self.motional_resistance,
+                self.motional_inductance,
+            ], dtype=np.float64)
+
         result = least_squares(
-            self._least_squares_residuals,
+            fit_func,
             x0=p0,
             bounds=(0, np.inf),
             args=(resonance_weight, resonance_width, frequency_weights),
         )
-        self.static_capacitance, self.motional_capacitance, self.motional_resistance, self.motional_inductance = \
-            result.x
+
+        if not off_res_cap:
+            self.static_capacitance, self.motional_capacitance, self.motional_resistance, self.motional_inductance = \
+                result.x
+        else:
+            self.static_capacitance, self.motional_resistance, self.motional_inductance = result.x
+            self.motional_capacitance = self._off_res_cap - self.static_capacitance
 
         return result
 
@@ -178,9 +221,24 @@ class Impedance:
         imag_impedance = np.imag(impedance)
         return np.concatenate((real_impedance, imag_impedance))
 
+    def _curve_fit_method_constrain_off_resonance(self, omega, C0, R1, L1):
+        C1 = self._off_res_cap - C0
+        impedance = _equivalent_impedance(1j*omega, C0, C1, R1, L1)
+        real_impedance = np.real(impedance)
+        imag_impedance = np.imag(impedance)
+        return np.concatenate((real_impedance, imag_impedance))
+
     def _least_squares_residuals(self, params: np.ndarray, resonance_weight: float, resonance_width: float | None,
                                  frequency_weights: np.ndarray | None) -> np.ndarray:
         model = self._curve_fit_method(self.angular_frequency, *params)
+        observed = np.concatenate((self.real_impedance, np.imag(self.impedance_complex)))
+        weights = self._frequency_weights(resonance_weight, resonance_width, frequency_weights)
+        return (model - observed)*np.concatenate((weights, weights))
+
+    def _least_squares_residuals_constrain_off_resonance(self, params: np.ndarray, resonance_weight: float,
+                                                         resonance_width: float | None,
+                                                         frequency_weights: np.ndarray | None) -> np.ndarray:
+        model = self._curve_fit_method_constrain_off_resonance(self.angular_frequency, *params)
         observed = np.concatenate((self.real_impedance, np.imag(self.impedance_complex)))
         weights = self._frequency_weights(resonance_weight, resonance_width, frequency_weights)
         return (model - observed)*np.concatenate((weights, weights))
@@ -204,6 +262,20 @@ class Impedance:
 
         scaled_distance = 2*np.pi*(self.frequency - self.resonant_frequency)/resonance_width
         return 1 + (resonance_weight - 1)*np.exp(-0.5*scaled_distance**2)
+
+    def _find_off_resonance_capacitance(self, frequency_width=20):
+        off_res_limit = self.resonant_frequency/5*2*np.pi
+        angular_frequencies = self.angular_frequency[:frequency_width]
+
+        if angular_frequencies[-1] > off_res_limit:
+            warnings.warn(f'There might not be enough off-resonance data points to accurately determine the '
+                          f'off-resonance capacitance. It is recommended to check the results and maybe manually give '
+                          f'the off-resonance capacitance.')
+
+        impedances = self.impedance_magnitude[:frequency_width]
+        off_res_capacitances = 1/(angular_frequencies*impedances)
+
+        self._off_res_cap = np.mean(off_res_capacitances)
 
 
 def _equivalent_impedance(s, C0, C1, R1, L1):
