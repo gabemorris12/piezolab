@@ -262,4 +262,4 @@ PyPiezo depends on:
 
 ## License
 
-Add a license section here once the project license is decided.
+PyPiezo is licensed under the MIT License. See the [LICENSE](LICENSE) file for the full text.

@@ -8,6 +8,7 @@ version = "0.1.0"
 description = "Tools for piezoelectric analysis."
 readme = "readme.md"
 requires-python = ">=3.10"
+license = "MIT"
 dependencies = [
     "matplotlib>=3.10.8",
     "scipy>=1.17.1"
@@ -15,6 +16,7 @@ dependencies = [
 
 [tool.setuptools]
 include-package-data = true
+license-files = ["LICENSE"]
 
 [tool.setuptools.packages.find]
 where = ["."]
