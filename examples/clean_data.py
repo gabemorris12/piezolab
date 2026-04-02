@@ -1,6 +1,6 @@
 import matplotlib.pyplot as plt
 
-from pypiezo import Impedance, get_data
+from piezolab import Impedance, get_data
 
 # plt.style.use('../maroon_py.mplstyle')
 

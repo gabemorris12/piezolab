@@ -2,7 +2,7 @@ from importlib.resources import files
 
 import numpy as np
 
-PATH = files("pypiezo").joinpath('data')
+PATH = files("piezolab").joinpath('data')
 
 SAMPLE_OPTIONS = (
     "clean_resonant_data",

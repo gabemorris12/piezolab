@@ -1,7 +1,7 @@
-# PyPiezo
+# PiezoLab
 
-PyPiezo is a small Python package for working with piezoelectric impedance data and extracting Butterworth-Van Dyke (
-BVD) equivalent circuit parameters from frequency sweeps.
+PiezoLab is a Python package for working with piezoelectric impedance data and extracting Butterworth-Van Dyke (BVD) 
+equivalent circuit parameters from frequency sweeps.
 
 It provides:
 
@@ -14,10 +14,10 @@ It provides:
 
 ## Installation
 
-PyPiezo can be installed with pip
+PiezoLab can be installed with pip
 
 ```bash
-pip install pypiezo
+pip install piezolab
 ```
 
 For editable development installs, clone the repository and run:
@@ -31,7 +31,7 @@ pip install -e .
 ```python
 import matplotlib.pyplot as plt
 
-from pypiezo import Impedance, get_data
+from piezolab import Impedance, get_data
 
 frequency, magnitude, phase_deg = get_data("clean_resonant_data")
 
@@ -48,9 +48,9 @@ plt.show()
 This will show the real admittance and impedance plots as well as the fitted impedance magnitude and phase as shown
 below.
 
-![image not found](https://github.com/gabemorris12/pypiezo/raw/master/images/plot_real.png)
+![image not found](https://github.com/gabemorris12/piezolab/raw/master/images/plot_real.png)
 
-![image not found](https://github.com/gabemorris12/pypiezo/raw/master/images/clean_data_impedance.png)
+![image not found](https://github.com/gabemorris12/piezolab/raw/master/images/clean_data_impedance.png)
 
 ## Data Model
 
@@ -61,7 +61,7 @@ Create an `Impedance` object from three NumPy arrays:
 - `impedance_phase_deg`: impedance phase in degrees
 
 ```python
-from pypiezo import Impedance
+from piezolab import Impedance
 
 imp = Impedance(frequency, impedance_magnitude, impedance_phase_deg)
 ```
@@ -212,7 +212,7 @@ The package includes four sample datasets accessible through `get_data()`:
 Example:
 
 ```python
-from pypiezo import get_data
+from piezolab import get_data
 
 frequency, magnitude, phase_deg = get_data("messy_sweep_data")
 ```
@@ -244,7 +244,7 @@ The `examples/` folder shows a few typical workflows:
 ## Minimal Workflow
 
 ```python
-from pypiezo import Impedance
+from piezolab import Impedance
 
 imp = Impedance(frequency, magnitude, phase_deg)
 imp.resolve_resonance()
@@ -254,7 +254,7 @@ imp.summarize()
 
 ## Dependencies
 
-PyPiezo depends on:
+PiezoLab depends on:
 
 - `numpy`
 - `matplotlib`
@@ -262,4 +262,4 @@ PyPiezo depends on:
 
 ## License
 
-PyPiezo is licensed under the MIT License. See the [LICENSE](LICENSE) file for the full text.
+PiezoLab is licensed under the MIT License. See the [LICENSE](LICENSE) file for the full text.
