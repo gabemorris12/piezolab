@@ -48,7 +48,9 @@ plt.show()
 This will show the real admittance and impedance plots as well as the fitted impedance magnitude and phase as shown
 below.
 
-![image not found](https://github.com/gabemorris12/mechanism/raw/master/images/fourbarlinkage.gif)
+![image not found](https://github.com/gabemorris12/pypiezo/raw/master/images/plot_real.png)
+
+![image not found](https://github.com/gabemorris12/pypiezo/raw/master/images/clean_data_impedance.png)
 
 ## Data Model
 
@@ -113,6 +115,9 @@ Behavior:
 - `off_res_cap=True`: estimate off-resonance capacitance from early low-frequency points and constrain the fit
 - `off_res_cap=<float>`: use a manually supplied off-resonance capacitance value
 
+If your dataset does not provide enough off-resonance points with `off_res_cap=True`, then a warning will be issued as 
+the estimate may be inaccurate. In that case, consider manually providing the float value.
+
 ### `least_squares_fit()`
 
 Uses `scipy.optimize.least_squares` with nonnegative parameter bounds and optional weighting near resonance.
@@ -129,14 +134,13 @@ result = imp.least_squares_fit(
 Key options:
 
 - `resonance_weight`: increases the importance of points near `fR`
-- `resonance_width`: width of the resonance weighting window in Hz
+- `resonance_width`: width of the resonance weighting window in rad/s
 - `frequency_weights`: custom weight array matching the frequency array shape
 - `off_res_cap`: same constrained-fit options as `curve_fit()`
 
 This method is the better starting point when:
 
 - the resonance region matters more than off-resonance behavior
-- the dataset is noisy
 - you want direct control over weighting
 
 ## Plotting

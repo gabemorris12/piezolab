@@ -256,7 +256,7 @@ class Impedance:
 
         :param resonance_weight: Weighting factor to increase the importance of fitting near the resonant frequency
                                  (must be at least 1).
-        :param resonance_width: Width of the weighting around the resonance in Hz. If None, it will be automatically
+        :param resonance_width: Width of the weighting around the resonance in rad/s. If None, it will be automatically
                                 determined.
         :param frequency_weights: Optional array of weights for each frequency point. If provided, it overrides the
                                   resonance_weight and resonance_width parameters.
