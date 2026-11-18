@@ -5,7 +5,9 @@ venv
 .DS_Store
 *egg-info/
 dist
+.claude
 
 *.mplstyle
+*.j2
 
 scratch*
