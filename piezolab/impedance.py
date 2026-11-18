@@ -6,6 +6,7 @@ import numpy as np
 from scipy.optimize import curve_fit, least_squares
 
 
+# noinspection pep8-naming
 class Impedance:
     def __init__(self, frequency: np.ndarray, impedance_magnitude: np.ndarray, impedance_phase_deg: np.ndarray):
         """
@@ -65,6 +66,7 @@ class Impedance:
 
         self.resolve_resonance()
 
+    # noinspection unsupported-operator
     def resolve_resonance(self):
         """
         Evaluate the resonant and anti-resonant frequencies from the real admittance and impedance data.
@@ -76,9 +78,9 @@ class Impedance:
 
         # R1 and C0 calculations
         self.motional_resistance = 1/np.max(self.real_admittance)
-        Y_imag_at_resonance = np.imag(self.admittance_complex[admittance_arg_max])
+        y_imag_at_resonance = np.imag(self.admittance_complex[admittance_arg_max])
         angular_resonant_frequency = self.angular_frequency[admittance_arg_max]
-        self.static_capacitance = abs(Y_imag_at_resonance/angular_resonant_frequency)
+        self.static_capacitance = abs(y_imag_at_resonance/angular_resonant_frequency)
 
         # Qm calculation
         half_Y_r_max = max_real_admittance/2
@@ -117,7 +119,6 @@ class Impedance:
         line1, = ax.plot(self.frequency, self.real_admittance, label='Real Admittance (S)', zorder=2)
         line2, = ax2.plot(self.frequency, self.real_impedance, color=impedance_color,
                           label=r'Real Impedance ($\Omega$)', zorder=2)
-        # noinspection PyTypeChecker
         p1 = ax.scatter(self.resonant_frequency, np.max(self.real_admittance), color=resonant_color, zorder=3,
                         label=f'$f_R={int(self.resonant_frequency)}$')
         p2 = ax2.scatter(self.anti_resonant_frequency, np.max(self.real_impedance), color=anti_resonant_color, zorder=3,
@@ -158,7 +159,6 @@ class Impedance:
         line2, = ax2.plot(self.frequency, self.impedance_phase_deg, color=phase_color, label=r'Phase (deg)',
                           zorder=2)
         line3, = ax.plot(self.frequency, parameter_mag, ls='--', zorder=2, label='Equivalent Circuit $|Z|$')
-        # noinspection PyTypeChecker
         ax.axvline(x=self.resonant_frequency, color=resonant_colors, ls='--')
         ax.axvline(x=self.anti_resonant_frequency, color=resonant_colors, ls='--')
 
@@ -180,6 +180,7 @@ class Impedance:
         return _equivalent_impedance(s, self.static_capacitance, self.motional_capacitance, self.motional_resistance,
                                      self.motional_inductance)
 
+    # noinspection string-format
     def summarize(self):
         """
         Print a summary of the BVD model parameters in a clear and organized format. The circuit is shown below
@@ -234,6 +235,7 @@ class Impedance:
                   self.motional_inductance]
 
         ydata = np.concatenate((self.real_impedance, np.imag(self.impedance_complex)))
+        # noinspection bad-argument-type
         popt, *_ = curve_fit(fit_func, self.angular_frequency, ydata, p0=p0)
 
         if not off_res_cap:
@@ -373,6 +375,7 @@ class Impedance:
         self._off_res_cap = np.mean(off_res_capacitances)
 
 
+# noinspection pep8-naming
 def _equivalent_impedance(s, C0, C1, R1, L1):
     num = C1*L1*s**2 + C1*R1*s + 1
     den = C0*C1*L1*s**3 + C0*C1*R1*s**2 + (C0 + C1)*s
